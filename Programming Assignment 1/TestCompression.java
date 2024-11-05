@@ -1,13 +1,9 @@
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Scanner;
 import java.util.stream.Stream;
-import java.nio.file.Files;
 
 /**
  * Class TestCompression to Test Huffman
@@ -76,11 +72,10 @@ public class TestCompression {
 
 public static void main(String[] args) throws IOException, ClassNotFoundException { 
   	 Huffman myHuff=new Huffman();
-  	 
   	 if (args.length==0) { // hardcoded and interactive inputs
   		 // hardcoded test for file genes.txt
-  		 myHuff.encode("genes.txt", "genes.huf");
-  		 myHuff.decode("genes.huf", "genesRecovered.txt");
+  		 myHuff.encode("testfiles/genes.txt", "testfiles/genes.huf");
+  		 myHuff.decode("testfiles/genes.huf", "testfiles/genesRecovered.txt");
   		 
   		 // interactive part typed as input
   		 while (true) { 

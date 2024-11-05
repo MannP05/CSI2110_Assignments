@@ -1,5 +1,7 @@
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 
 import net.datastructures.*;
@@ -115,8 +117,12 @@ public class Huffman {
 		ArrayList<Integer> freqTable= new ArrayList<Integer>(257); // declare frequency table
 		for (int i=0; i<257;i++) freqTable.add(i,0); // initialize frequency values with 0
 		
-		/************ your code comes here ************/
-		
+		/************ test code here ************/
+		int byteRead;
+		while ((byteRead = input.read()) != -1) {
+			freqTable.set(byteRead, freqTable.get(byteRead) + 1);
+		}
+		freqTable.set(256, 1); // add special character representing "end-of-file"
 		
 		return freqTable; // return computer frequency table
 	}
@@ -130,9 +136,33 @@ public class Huffman {
 		
 		// creates new huffman tree using a priority queue based on the frequency at the root
 		
-		/************ your code comes here ************/
-	
-	   return null; // dummy return value so code compiles
+		/************ test comes here ************/
+		
+		// Create a priority queue to store the nodes of the Huffman tree
+		HeapPriorityQueue<Integer, HuffmanTreeNode> pq = new HeapPriorityQueue<>();
+
+		// Insert all characters with non-zero frequency into the priority queue
+		for (int i = 0; i < freqTable.size(); i++) {
+			if (freqTable.get(i) > 0) {
+				pq.insert(freqTable.get(i), new HuffmanTreeNode(i, freqTable.get(i), null, null));
+			}
+		}
+
+		// Build the Huffman tree
+		while (pq.size() > 1) {
+			// Remove the two nodes with the lowest frequency
+			Entry<Integer, HuffmanTreeNode> left = pq.removeMin();
+			Entry<Integer, HuffmanTreeNode> right = pq.removeMin();
+
+			// Create a new internal node with these two nodes as children and with frequency equal to the sum of their frequencies
+			HuffmanTreeNode newNode = new HuffmanTreeNode(-1, left.getKey() + right.getKey(), left.getValue(), right.getValue());
+
+			// Add the new node to the priority queue
+			pq.insert(newNode.getCount(), newNode);
+		}
+
+		// The remaining node is the root of the Huffman tree
+		return pq.min().getValue();
 	}
 	
 	
@@ -146,9 +176,18 @@ public class Huffman {
 		ArrayList<String> code= new ArrayList<String>(257); 
 		for (int i=0;i<257;i++) code.add(i,null);
 		
-		/************ your code comes here ************/
-		
+		/************ test code here ************/
+		buildEncodingTableHelper(encodingTreeRoot, "", code);
 		return code;
+	}
+
+	private void buildEncodingTableHelper(HuffmanTreeNode node, String path, ArrayList<String> code) {
+		if (node.isLeaf()) {
+			code.set(node.getChar(), path);
+		} else {
+			buildEncodingTableHelper(node.getLeft(), path + "0", code);
+			buildEncodingTableHelper(node.getRight(), path + "1", code);
+		}
 	}
 	
 	/**
@@ -161,8 +200,18 @@ public class Huffman {
 	private void encodeData(InputStream input, ArrayList<String> encodingTable, OutputStream output) throws IOException {
 		OutBitStream bitStream = new OutBitStream(output); // uses bitStream to output bit by bit
 	   
-		/************ your code comes here ************/
-		
+		/************ test code here ************/
+		int byteRead;
+		while ((byteRead = input.read()) != -1) {
+			String code = encodingTable.get(byteRead);
+			for (char bit : code.toCharArray()) {
+				bitStream.writeBit(bit - '0');
+			}
+		}
+		String eofCode = encodingTable.get(256); // get the code for the "end-of-file" character
+		for (char bit : eofCode.toCharArray()) {
+			bitStream.writeBit(bit - '0');
+		}
 		
 		bitStream.close(); // close bit stream; flushing what is in the bit buffer to output file
 	}
@@ -179,7 +228,24 @@ public class Huffman {
 		InBitStream inputBitStream= new InBitStream(input); // associates a bit stream to read bits from file
 		
 		/************ your code comes here ************/
-		
+		HuffmanTreeNode currentNode = encodingTreeRoot;
+		int bit;
+		while ((bit = inputBitStream.readBit()) != -1) {
+			if (bit == 0) {
+				currentNode = currentNode.getLeft();
+			} else {
+				currentNode = currentNode.getRight();
+			}
+
+			if (currentNode.isLeaf()) {
+				if (currentNode.getChar() == 256) { // end-of-file character
+					break;
+				}
+				output.write(currentNode.getChar());
+				currentNode = encodingTreeRoot;
+			}
+		}
+		output.close();
     }
 	
 	/**
@@ -204,6 +270,8 @@ public class Huffman {
 		//System.out.println("EncodingTable is="+codes);
 		codedOutput.writeObject(freqTable); //write header with frequency table
 		encodeData(copyinput,codes,codedOutput); // write the Huffman encoding of each character in file
+		System.out.println("Number of bytes in input file: " + Files.size(Paths.get(inputFileName)));
+		System.out.println("Number of bytes in output file: " + Files.size(Paths.get(outputFileName)));
 	}
 	
     /**
@@ -224,9 +292,12 @@ public class Huffman {
 		//System.out.println("FrequencyTable is="+freqTable);
 		HuffmanTreeNode root= buildEncodingTree(freqTable);
 		decodeData(codedInput, root, output);
+		System.out.println("Number of bytes in input file: " + Files.size(Paths.get(inputFileName)));
+		 System.out.println("Number of bytes in output file: " + Files.size(Paths.get(outputFileName)));
 	}
 	
 	
 }
+
 	
     
