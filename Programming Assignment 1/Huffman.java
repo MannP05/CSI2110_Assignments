@@ -138,31 +138,41 @@ public class Huffman {
 		
 		/************ test comes here ************/
 		
-		// Create a priority queue to store the nodes of the Huffman tree
-		HeapPriorityQueue<Integer, HuffmanTreeNode> pq = new HeapPriorityQueue<>();
-
-		// Insert all characters with non-zero frequency into the priority queue
-		for (int i = 0; i < freqTable.size(); i++) {
-			if (freqTable.get(i) > 0) {
-				pq.insert(freqTable.get(i), new HuffmanTreeNode(i, freqTable.get(i), null, null));
+		// Step 2: Initialize priority queue
+		HeapPriorityQueue<Integer, HuffmanTreeNode> P = new HeapPriorityQueue<>();
+    
+		// Steps 3-5: Create single-node trees for each character and insert into queue
+		for (int c = 0; c < freqTable.size(); c++) {
+			int freq = freqTable.get(c);
+			if (freq > 0) {
+				// Create single-node binary tree T storing c
+				HuffmanTreeNode T = new HuffmanTreeNode(c, freq, null, null);
+				// Insert T with key f(c) into P
+				P.insert(freq, T);
 			}
 		}
-
-		// Build the Huffman tree
-		while (pq.size() > 1) {
-			// Remove the two nodes with the lowest frequency
-			Entry<Integer, HuffmanTreeNode> left = pq.removeMin();
-			Entry<Integer, HuffmanTreeNode> right = pq.removeMin();
-
-			// Create a new internal node with these two nodes as children and with frequency equal to the sum of their frequencies
-			HuffmanTreeNode newNode = new HuffmanTreeNode(-1, left.getKey() + right.getKey(), left.getValue(), right.getValue());
-
-			// Add the new node to the priority queue
-			pq.insert(newNode.getCount(), newNode);
+		
+		// Step 6-10: Combine trees until only one remains
+		while (P.size() > 1) {
+			// Step 7: First minimum
+			Entry<Integer, HuffmanTreeNode> e1 = P.removeMin();
+			int f1 = e1.getKey();
+			HuffmanTreeNode T1 = e1.getValue();
+			
+			// Step 8: Second minimum
+			Entry<Integer, HuffmanTreeNode> e2 = P.removeMin();
+			int f2 = e2.getKey();
+			HuffmanTreeNode T2 = e2.getValue();
+			
+			// Step 9: Create new binary tree T
+			HuffmanTreeNode T = new HuffmanTreeNode(-1, f1 + f2, T1, T2);
+			
+			// Step 10: Insert combined tree
+			P.insert(f1 + f2, T);
 		}
-
-		// The remaining node is the root of the Huffman tree
-		return pq.min().getValue();
+		
+		// Steps 12-13: Remove and return final tree
+		return P.removeMin().getValue();
 	}
 	
 	
@@ -208,12 +218,14 @@ public class Huffman {
 				bitStream.writeBit(bit - '0');
 			}
 		}
-		String eofCode = encodingTable.get(256); // get the code for the "end-of-file" character
+		
+		// Write EOF code
+		String eofCode = encodingTable.get(256);
 		for (char bit : eofCode.toCharArray()) {
 			bitStream.writeBit(bit - '0');
 		}
 		
-		bitStream.close(); // close bit stream; flushing what is in the bit buffer to output file
+		bitStream.close();
 	}
 	
 	/**
@@ -229,24 +241,28 @@ public class Huffman {
 		
 		/************ your code comes here ************/
 		HuffmanTreeNode currentNode = encodingTreeRoot;
+    
 		int bit;
 		while ((bit = inputBitStream.readBit()) != -1) {
-			if (bit == 0) {
-				currentNode = currentNode.getLeft();
-			} else {
-				currentNode = currentNode.getRight();
-			}
-
+			// Traverse tree based on input bit
+			currentNode = (bit == 0) ? currentNode.getLeft() : currentNode.getRight();
+			
+			// When we reach a leaf node
 			if (currentNode.isLeaf()) {
-				if (currentNode.getChar() == 256) { // end-of-file character
+				int character = currentNode.getChar();
+				// Check if it's the EOF character
+				if (character == 256) {
 					break;
 				}
-				output.write(currentNode.getChar());
+				// Write the character to output
+				output.write(character);
+				// Reset to root for next character
 				currentNode = encodingTreeRoot;
 			}
 		}
+		
 		output.close();
-    }
+	}
 	
 	/**
 	 * Method that implements Huffman encoding on plain input into encoded output
