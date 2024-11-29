@@ -114,17 +114,15 @@ public class Huffman {
 	 */
 	
 	private ArrayList<Integer> buildFrequencyTable(InputStream input) throws IOException{
-		ArrayList<Integer> freqTable= new ArrayList<Integer>(257); // declare frequency table
-		for (int i=0; i<257;i++) freqTable.add(i,0); // initialize frequency values with 0
-		
-		/************ test code here ************/
+		ArrayList<Integer> freqTable = new ArrayList<>(257);
+
+		for (int i = 0; i < 257; i++) freqTable.add(i, 0);
 		int byteRead;
 		while ((byteRead = input.read()) != -1) {
 			freqTable.set(byteRead, freqTable.get(byteRead) + 1);
 		}
-		freqTable.set(256, 1); // add special character representing "end-of-file"
-		
-		return freqTable; // return computer frequency table
+		freqTable.set(256, 1); // EOF character
+		return freqTable;
 	}
 
 	/**
@@ -280,10 +278,10 @@ public class Huffman {
  		ObjectOutputStream codedOutput= new ObjectOutputStream(out); // use ObjectOutputStream to print objects to file
  		
 		ArrayList<Integer> freqTable= buildFrequencyTable(input); // build frequencies from input
-		//System.out.println("FrequencyTable is="+freqTable);
+		System.out.println("FrequencyTable is="+freqTable);
 		HuffmanTreeNode root= buildEncodingTree(freqTable); // build tree using frequencies
 		ArrayList<String> codes= buildEncodingTable(root);  // buildcodes for each character in file
-		//System.out.println("EncodingTable is="+codes);
+		System.out.println("EncodingTable is="+codes);
 		codedOutput.writeObject(freqTable); //write header with frequency table
 		encodeData(copyinput,codes,codedOutput); // write the Huffman encoding of each character in file
 		System.out.println("Number of bytes in input file: " + Files.size(Paths.get(inputFileName)));
